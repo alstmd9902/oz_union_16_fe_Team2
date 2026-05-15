@@ -55,7 +55,7 @@ const defaultUser: MockUser = {
 }
 
 const mockUsers: MockUser[] = [defaultUser]
-let activeUser: MockUser = defaultUser
+let activeUser: MockUser | null = null
 
 const getProfileImageUrl = (profileImage?: string) => {
   if (!profileImage) return profileImages[0].image_url
@@ -76,6 +76,14 @@ const toMeResponse = (user: MockUser) => ({
   auth_provider: user.auth_provider,
   is_social: user.is_social,
 })
+
+const requireActiveUser = () => {
+  if (!activeUser) {
+    return null
+  }
+
+  return activeUser
+}
 
 export const authHandler = [
   http.post(toMswApiUrl('/accounts/signup'), async ({ request }) => {
@@ -142,32 +150,57 @@ export const authHandler = [
     await delay(150)
     resetGoalHandlerState()
     resetPostHandlerState()
-    activeUser = defaultUser
+    activeUser = null
 
     return HttpResponse.json({ detail: 'Logged out.' })
   }),
 
   http.post(toMswApiUrl('/accounts/token/refresh'), async () => {
     await delay(150)
+    if (!requireActiveUser()) {
+      return HttpResponse.json(
+        { detail: 'Authentication credentials were not provided.' },
+        { status: 401 }
+      )
+    }
+
     return HttpResponse.json({ access_token: 'mock-refreshed-access-token' })
   }),
 
   http.get(toMswApiUrl('/accounts/me'), async () => {
     await delay(150)
-    return HttpResponse.json(toMeResponse(activeUser))
+    const user = requireActiveUser()
+
+    if (!user) {
+      return HttpResponse.json(
+        { detail: 'Authentication credentials were not provided.' },
+        { status: 401 }
+      )
+    }
+
+    return HttpResponse.json(toMeResponse(user))
   }),
 
   http.patch(
     toMswApiUrl('/accounts/me/change-nickname'),
     async ({ request }) => {
       await delay(150)
+      const user = requireActiveUser()
+
+      if (!user) {
+        return HttpResponse.json(
+          { detail: 'Authentication credentials were not provided.' },
+          { status: 401 }
+        )
+      }
+
       const body = (await request.json()) as { nickname?: string }
-      const nickname = body.nickname ?? activeUser.nickname
+      const nickname = body.nickname ?? user.nickname
 
       if (
         mockUsers.some(
           (mockUser) =>
-            mockUser.id !== activeUser.id && mockUser.nickname === nickname
+            mockUser.id !== user.id && mockUser.nickname === nickname
         )
       ) {
         return HttpResponse.json(
@@ -176,7 +209,7 @@ export const authHandler = [
         )
       }
 
-      activeUser.nickname = nickname
+      user.nickname = nickname
 
       return HttpResponse.json({
         detail: {
@@ -239,6 +272,7 @@ export const authHandler = [
     toMswApiUrl('/accounts/social-login/:provider/callback'),
     async () => {
       await delay(200)
+      activeUser = defaultUser
       return HttpResponse.json({ access_token: 'mock-social-access-token' })
     }
   ),

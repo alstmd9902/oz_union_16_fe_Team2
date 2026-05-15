@@ -18,17 +18,11 @@ export function useRestoreAuthSession() {
     const restoreSession = async () => {
       const {
         accessToken,
-        user,
         setAccessToken,
         setAuthStatus,
         setSession,
         clearSession,
       } = useAuthStore.getState()
-
-      if (accessToken && user) {
-        setAuthStatus('restored')
-        return
-      }
 
       setAuthStatus('checking')
 
