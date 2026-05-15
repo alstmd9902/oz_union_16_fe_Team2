@@ -7,15 +7,23 @@ import '@fontsource/pretendard/500.css'
 import '@fontsource/pretendard/700.css'
 import './index.css'
 
-/*
+const shouldEnableMsw =
+  import.meta.env.DEV || import.meta.env.VITE_ENABLE_MSW === 'true'
+
 async function enableMocking() {
-  if (import.meta.env.DEV) {
-    const { worker } = await import('./mocks/browser.ts')
-    await worker.start()
+  if (!shouldEnableMsw) {
+    return
   }
+
+  const { worker } = await import('./mocks/browser.ts')
+  await worker.start({
+    onUnhandledRequest: 'bypass',
+    serviceWorker: {
+      url: '/mockServiceWorker.js',
+    },
+  })
 }
+
 enableMocking().then(() => {
   createRoot(document.getElementById('root')!).render(<App />)
 })
-*/
-createRoot(document.getElementById('root')!).render(<App />)

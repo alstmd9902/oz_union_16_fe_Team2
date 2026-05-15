@@ -8,7 +8,7 @@ import { cn } from '@/utils/cn'
 
 type ProfileImageSelectFieldProps = {
   value?: string
-  onChange: (value: string) => void
+  onChange: (value: string, imageUrl?: string) => void
 }
 
 export function ProfileImageSelectField({
@@ -42,7 +42,7 @@ export function ProfileImageSelectField({
   const handleSelectCharacter = (code: string) => {
     const character = profileAvatarOptions.find((item) => item.code === code)
     if (!character) return
-    onChange(character.code)
+    onChange(character.code, character.imageUrl)
     setIsActive(true)
     setIsOpen(false)
   }

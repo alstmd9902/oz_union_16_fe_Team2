@@ -79,6 +79,8 @@ export function Header() {
     if (!user || !canEditProfile) return
 
     const shouldChangeNickname = values.nickname !== user.nickname
+    const shouldChangeProfileImage =
+      values.profileImageUrl !== user.profileImageUrl
     const shouldChangePassword =
       values.currentPassword.length > 0 ||
       values.newPassword.length > 0 ||
@@ -102,6 +104,12 @@ export function Header() {
     if (nicknameResponse) {
       updateUser({
         nickname: nicknameResponse.detail.nickname,
+      })
+    }
+
+    if (shouldChangeProfileImage) {
+      updateUser({
+        profileImageUrl: values.profileImageUrl,
       })
     }
 

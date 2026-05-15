@@ -8,6 +8,7 @@ import * as z from 'zod'
 import { Button, Input, type InputProps } from '@/components/common/ui'
 import { usePasswordVisibility } from '@/features/auth/hooks/usePasswordVisibility'
 import { PasswordVisibilityButton } from '@/features/auth/PasswordVisibilityButton'
+import { ProfileImageSelectField } from '@/features/auth/signup'
 import {
   useCheckCurrentPasswordMutation,
   useCheckNicknameMutation,
@@ -18,6 +19,7 @@ import { Modal, type ModalProps } from '../base/Modal'
 
 export type ProfileEditFormValues = {
   nickname: string
+  profileImageUrl: string
   currentPassword: string
   newPassword: string
   passwordConfirm: string
@@ -51,6 +53,7 @@ const passwordSchema = z
 const profileEditFormSchema = z
   .object({
     nickname: z.string().trim().min(1, '닉네임을 입력해주세요'),
+    profileImageUrl: z.string().min(1, '프로필 캐릭터를 선택해주세요'),
     currentPassword: z.string(),
     newPassword: z.string(),
     passwordConfirm: z.string(),
@@ -179,17 +182,20 @@ export function ProfileEditModal({
     handleSubmit,
     register,
     setError,
+    setValue,
     trigger,
   } = useForm<ProfileEditFormSchema>({
     resolver: zodResolver(profileEditFormSchema),
     defaultValues: {
       nickname,
+      profileImageUrl,
       currentPassword: '',
       newPassword: '',
       passwordConfirm: '',
     },
   })
   const nicknameValue = useWatch({ control, name: 'nickname' })
+  const profileImageValue = useWatch({ control, name: 'profileImageUrl' })
   const currentPasswordValue = useWatch({ control, name: 'currentPassword' })
   const { mutateAsync: checkNickname } = useCheckNicknameMutation()
   const { mutateAsync: checkCurrentPassword } =
@@ -345,6 +351,7 @@ export function ProfileEditModal({
     try {
       await onSubmit({
         nickname: values.nickname.trim(),
+        profileImageUrl: values.profileImageUrl,
         currentPassword: values.currentPassword,
         newPassword: values.newPassword,
         passwordConfirm: values.passwordConfirm,
@@ -448,10 +455,16 @@ export function ProfileEditModal({
         <Modal.Content className="mt-5">
           <div className="flex flex-col gap-6">
             <div className="flex flex-col items-center gap-3">
-              <img
-                src={profileImageUrl}
-                alt={`${nicknameValue || nickname} 프로필`}
-                className="size-20 rounded-full object-cover"
+              <ProfileImageSelectField
+                value={profileImageValue}
+                onChange={(_, imageUrl) => {
+                  if (!imageUrl) return
+                  setValue('profileImageUrl', imageUrl, {
+                    shouldDirty: true,
+                    shouldTouch: true,
+                    shouldValidate: true,
+                  })
+                }}
               />
             </div>
 
